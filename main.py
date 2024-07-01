@@ -12,28 +12,24 @@ def calculate_srm_features(image, x, y, window_size=3):
     
     return mean_value, std_deviation
 
-def choose_embed_positions(image, threshold=0.35):
+def choose_embed_positions(image, embed_length):
     # 计算每个像素的局部区域的SRM特征
     rows, cols = image.shape
     srm_features = np.zeros((rows, cols))
+    positions = []
     
     for i in range(rows):
         for j in range(cols):
             # 计算像素（i, j）的局部区域的SRM特征
             mean_value, std_deviation = calculate_srm_features(image, i, j)
             
-            # 示例：将均值和标准差组合成一个分数
+            # 将均值和标准差组合成一个分数
             srm_features[i, j] = mean_value + std_deviation
-            
-    # 将SRM特征归一化到[0, 1]
-    srm_features = srm_features / np.max(srm_features)
+            positions.append((srm_features[i, j], (i, j)))
     
-    # 根据SRM特征分数选择嵌入位置
-    embed_positions = []
-    for i in range(rows):
-        for j in range(cols):
-            if srm_features[i, j] < threshold:
-                embed_positions.append((i, j))
+    # 对SRM特征进行排序，选择前embed_length个位置
+    positions.sort()
+    embed_positions = [pos for _, pos in positions[:embed_length]]
     
     return embed_positions
 
@@ -105,17 +101,17 @@ def extract_embedded_data(embedded_image, embed_positions, embed_count):
     extracted_text = ''.join(extracted_data)
     return extracted_text
 
-# 示例用法
+
 if __name__ == "__main__":
     # 加载一个示例PGM格式的图像（替换为你自己的图像路径）
     image_path = '1.pgm'
     image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
     
-    # 根据SRM特征选择LSB嵌入位置
-    embed_positions = choose_embed_positions(image)
-    
     # 从date.txt读取要嵌入的数据
     data_to_embed = read_data_to_embed('date.txt')
+    
+    # 根据数据长度选择LSB嵌入位置
+    embed_positions = choose_embed_positions(image, len(data_to_embed))
     
     # 将数据嵌入图像的选择位置中
     embedded_image, mask = embed_data(image, embed_positions, data_to_embed)
