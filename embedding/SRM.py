@@ -117,7 +117,7 @@ def extract_embedded_data(embedded_image, embed_positions, embed_count):
     extracted_text = ''.join(extracted_data)
     return extracted_text
 
-def embed(img_path, data_path):
+def embed(img_path, data_path, img_hz="png"):
     # 加载图像
     image = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
     
@@ -132,11 +132,11 @@ def embed(img_path, data_path):
     
     # 保存嵌入数据的图像为PNG格式（替换为你想要的输出路径）
     img_name = os.path.basename(img_path).split('.')[0]
-    cv2.imwrite(f'../img/steg/{img_name}_SRM_steg.png', embedded_image)
-    print(f"数据嵌入成功。嵌入数据的图像已保存为'img/steg/{img_name}_SRM_steg.png'。")
+    cv2.imwrite(f'../img/steg/SRM/{img_name}_SRM_steg.{img_hz}', embedded_image)
+    print(f"数据嵌入成功。嵌入数据的图像已保存为'img/steg/SRM/{img_name}_SRM_steg.{img_hz}'。")
     # 单独保存掩码图像
-    cv2.imwrite(f'../img/mask/{img_name}_SRM_mask.png', mask)
-    print(f"嵌入掩码图像已保存为'img/mask/{img_name}_SRM_mask.png'。")
+    cv2.imwrite(f'../img/mask/{img_name}_SRM_mask.{img_hz}', mask)
+    print(f"嵌入掩码图像已保存为'img/mask/{img_name}_SRM_mask.{img_hz}'。")
 
 
 
