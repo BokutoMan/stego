@@ -1,36 +1,73 @@
+import pandas as pd
+import os
 import numpy as np
-import cv2
-from scipy.stats import norm
+from sklearn.metrics.pairwise import cosine_similarity
 
-def statistical_residual_method(image_path, threshold=0.05):
-    # 读取图片
-    img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-    
-    # 计算图像的统计残差
-    mean = np.mean(img)
-    std_dev = np.std(img)
-    residuals = (img - mean) / std_dev
-    
-    # 计算残差的正态分布累积概率
-    p_values = norm.cdf(residuals)
-    
-    # 判断是否存在异常值
-    anomaly_count = np.sum(p_values < threshold)
-    
-    # 输出结果
-    if anomaly_count > 0:
-        print(f"Image {image_path} contains potential steganographic information.")
-    else:
-        print(f"Image {image_path} does not appear to contain steganographic information.")
-    return anomaly_count
+def cosine_sim(X, Y):
+    return cosine_similarity([X], [Y])[0][0]
 
-# 测试代码
-if __name__ == "__main__":
-    img_dir = "D:\Download\database\BOSSbase_1.01"
-    l = []
-    for i in range(1, 100):
-        image_path = f"{img_dir}\{i}.pgm"
-        anomaly_count = statistical_residual_method(image_path) 
-        l.append(anomaly_count)
+def pearson_correlation(X, Y):
+    return np.corrcoef(X, Y)[0, 1]
 
-    print(l)
+Original_path = r'./Original/'
+
+all_Original = pd.DataFrame()
+
+for file in os.listdir(Original_path):
+    fea_Original = pd.read_csv(Original_path + file, header=None,delimiter=' ')
+    fea_Original = fea_Original.iloc[:, :-1] # 去掉最后一列
+    all_Original = pd.concat([all_Original, fea_Original], axis=1)
+
+# print(all_Original.shape)
+
+LV_path = r'./LV/'
+
+all_LV = pd.DataFrame()
+
+for file in os.listdir(LV_path):
+    fea_LV = pd.read_csv(LV_path + file, header=None,delimiter=' ')
+    fea_LV = fea_LV.iloc[:, :-1] # 去掉最后一列
+    all_LV = pd.concat([all_LV, fea_LV], axis=1)
+
+# print(all_LV.shape)
+
+SRM_path = r'./SRM/'
+
+all_SRM = pd.DataFrame()
+
+for file in os.listdir(SRM_path):
+    fea_SRM = pd.read_csv(SRM_path + file, header=None,delimiter=' ')
+    fea_SRM = fea_SRM.iloc[:, :-1] # 去掉最后一列
+    all_SRM = pd.concat([all_SRM, fea_SRM], axis=1)
+
+# print(all_SRM.shape)
+
+all_SRM = all_SRM.to_numpy()
+all_LV = all_LV.to_numpy()
+all_Original = all_Original.to_numpy()
+
+persion = []
+consin = []
+for i in range(0,(all_SRM.shape[0])):
+    per = pearson_correlation(all_Original[i], all_LV[i])
+    cos = cosine_sim(all_Original[i], all_LV[i])
+    persion.append(per)
+    consin.append(cos)
+
+print("原图与使用局部方差嵌入的图片的皮尔逊相关系数:", persion)
+print("原图与使用局部方差嵌入的图片的余弦相似度：", consin)
+
+persion1 = []
+consin1 = []
+for i in range(0,(all_SRM.shape[0])):
+    per = pearson_correlation(all_Original[i], all_SRM[i])
+    cos = cosine_sim(all_Original[i], all_SRM[i])
+    persion1.append(per)
+    consin1.append(cos)
+
+print("原图与使用SRM方法嵌入的图片的皮尔逊相关系数:", persion1)
+print("原图与使用SRM方法嵌入的图片的余弦相似度:", consin1)
+
+
+print("两组皮尔逊相关系数的相关系数", pearson_correlation(persion, persion1))
+print("两组余弦相似度的余弦相似度：",cosine_sim(consin, consin1))
